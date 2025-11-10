@@ -1,35 +1,34 @@
-# assembl3D 🛠️
+# assembl3D
 
-**🚀 Copilot for Assembly**
+**Copilot for Assembly**
 
-## 🎯 What It Does
+![Demo](./demo.gif)
 
-1. Search for any furniture (e.g., "Billy Bookcase")
-2. Scrape IKEA manuals using Bright Data
-3. Process PDFs with Google Gemini AI
-4. Display interactive 3D assembly instructions
+An AI-powered platform that transforms static PDF assembly manuals into interactive 3D assembly guides. The system leverages web scraping, computer vision, and 3D rendering to extract structured assembly instructions from furniture manuals and present them in an immersive, step-by-step visualization environment.
+
+## Architecture Overview
+
+The application follows a microservices architecture with a Node.js/Express backend and a Next.js 15 frontend. The pipeline consists of four main stages:
+
+1. **Web Scraping Layer**: Uses Bright Data's SERP API to discover product pages, Web Scraper to extract metadata, and Web Unlocker to bypass anti-scraping measures and download PDF manuals
+2. **AI Processing Pipeline**: Converts PDF pages to images, feeds them to Google Gemini 2.0 Flash (vision model) for multi-modal analysis, and extracts structured data including assembly steps, part lists, tool requirements, and 3D spatial relationships
+3. **Data Transformation**: Transforms AI-extracted data into Three.js-compatible scene graphs with geometric primitives, materials, and animations
+4. **3D Rendering Engine**: React Three Fiber-based viewer with interactive controls, part highlighting, cumulative scene building, and real-time step navigation
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 18+
-- [Bright Data API key](https://brightdata.com)
-- [Google Gemini API key](https://ai.google.dev)
+You'll need Node.js 18+ and API keys for [Bright Data](https://brightdata.com) and [Google Gemini](https://ai.google.dev).
 
-### Backend
-
+**Backend:**
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# Add your API keys to .env
+# Add your API keys
 npm run dev
 ```
 
-Runs on `http://localhost:3001`
-
-### Frontend
-
+**Frontend:**
 ```bash
 cd frontend
 npm install
@@ -38,183 +37,136 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Runs on `http://localhost:3000`
-
-## Tech Stack
-
-**Frontend**
-- Next.js 15 with TypeScript
-- React Three Fiber for 3D rendering
-- Tailwind CSS + Shadcn/ui
-- @react-three/drei for 3D helpers
-
-**Backend**
-- Node.js + Express + TypeScript
-- Google Gemini API for vision processing
-- Bright Data for web scraping (SERP API, Web Unlocker, Web Scraper)
-- Automated PDF to image conversion
-
-## How it works
-
-1. User searches for a product, pastes an IKEA URL, or browses the library
-2. Bright Data scrapes the product page and downloads the assembly manual PDF
-3. Gemini AI analyzes each page and extracts assembly steps, parts, and tools
-4. Frontend renders the instructions in an interactive 3D environment
+Visit `http://localhost:3000` to get started.
 
 ## Project Structure
 
 ```
-assem3ly/
-├── backend/
+assembl3D/
+├── backend/                          # Express API server
+│   ├── brightdata/                  # Web scraping module
+│   │   ├── scraper.ts              # Main scraping orchestrator
+│   │   ├── serp-search.ts          # SERP API integration
+│   │   ├── web-scraper.ts          # Product page extraction
+│   │   ├── pdf-downloader.ts       # PDF download via Web Unlocker
+│   │   ├── scrape-top-products.ts  # Batch product scraping
+│   │   ├── generate-top-50.ts      # Top products data generator
+│   │   └── types.ts                # Scraping interfaces
+│   │
 │   ├── src/
-│   │   ├── api/              # API routes and endpoints
-│   │   ├── gemini/           # AI processing with Google Gemini
+│   │   ├── api/                    # REST API routes
+│   │   │   ├── routes.ts          # Main route definitions
+│   │   │   └── pdf-processor.route.ts  # PDF processing endpoint
+│   │   │
+│   │   ├── gemini/                 # AI processing pipeline
+│   │   │   ├── processor.ts       # Main orchestrator (PDF → steps)
 │   │   │   ├── pdf-parser.ts      # PDF to image conversion
-│   │   │   ├── processor.ts       # Main processing logic
-│   │   │   ├── prompt-builder.ts  # AI prompt generation
-│   │   │   ├── scene-generator.ts # 3D scene data generation
-│   │   │   └── types.ts           # TypeScript definitions
-│   │   ├── parser_docs/      # Documentation for PDF processing
-│   │   ├── public/           # Static assets and sample PDFs
-│   │   └── index.ts          # Express server entry point
-│   ├── brightdata/           # Web scraping utilities
-│   │   ├── scraper.ts              # Main scraping logic
-│   │   ├── scrape-top-products.ts  # Product data scraping
-│   │   ├── generate-top-50.ts      # Top products generator
-│   │   ├── download-product-images.ts
-│   │   ├── update-frontend-data.ts
-│   │   └── types.ts
-│   ├── data/                 # Cached data and downloaded assets
-│   │   ├── images/           # Product images
-│   │   └── top-50-products.json
-│   ├── models/               # 3D model files (.glb)
-│   ├── output/               # Processed assembly steps
-│   └── package.json
-├── frontend/
-│   ├── app/
-│   │   ├── assembly/         # Assembly instruction pages
-│   │   ├── assembly-preview/ # Preview functionality
-│   │   ├── preview/          # Additional preview pages
-│   │   ├── api/              # API routes
-│   │   │   └── assembly-chat/ # Reka AI chatbot API
-│   │   └── page.tsx          # Landing page
+│   │   │   ├── prompt-builder.ts  # Dynamic prompt generation
+│   │   │   ├── scene-generator.ts # 3D scene JSON generation
+│   │   │   └── types.ts           # AI extraction interfaces
+│   │   │
+│   │   ├── parser_docs/            # PDF processing documentation
+│   │   └── index.ts                # Express server entry point
+│   │
+│   ├── data/
+│   │   ├── images/                 # Cached product images
+│   │   ├── top-50-products.json    # Pre-scraped product library
+│   │   └── output/                 # Processed assembly steps (JSON)
+│   │
+│   └── models/                      # 3D model assets (.glb files)
+│
+├── frontend/                        # Next.js 15 application
+│   ├── app/                         # App Router pages
+│   │   ├── page.tsx                # Landing page
+│   │   ├── assembly/[id]/          # Dynamic assembly viewer route
+│   │   ├── api/
+│   │   │   ├── assembly-chat/      # Reka AI chatbot API route
+│   │   │   └── reka-vision/        # Vision API integration
+│   │   └── layout.tsx              # Root layout
+│   │
 │   ├── components/
-│   │   ├── assembly/         # Assembly-related components
-│   │   │   ├── AssemblyPageClient.tsx
-│   │   │   ├── AssemblyChatbot.tsx   # AI chatbot component
-│   │   │   ├── PartsList.tsx
-│   │   │   ├── StepList.tsx
-│   │   │   ├── StepNavigation.tsx
-│   │   │   └── ToolsList.tsx
-│   │   ├── landing/          # Landing page components
-│   │   ├── library/          # Product library components
-│   │   ├── navigation/       # Navigation and tabs
-│   │   ├── search/           # Search functionality
-│   │   │   ├── ProductCard.tsx
-│   │   │   ├── search-section.tsx
-│   │   │   ├── SearchProgress.tsx
-│   │   │   └── SearchResults.tsx
-│   │   ├── viewer/           # 3D viewer components
-│   │   └── ui/               # Reusable UI components (shadcn/ui)
+│   │   ├── assembly/               # Assembly UI components
+│   │   │   ├── AssemblyPageClient.tsx    # Main assembly page logic
+│   │   │   ├── AssemblyChatbot.tsx       # AI chatbot interface
+│   │   │   ├── StepList.tsx              # Step navigation sidebar
+│   │   │   ├── PartsList.tsx             # Parts list display
+│   │   │   ├── ToolsList.tsx             # Tools required display
+│   │   │   └── StepNavigation.tsx        # Previous/Next controls
+│   │   │
+│   │   ├── viewer/                 # 3D rendering components
+│   │   │   ├── AssemblyViewer.tsx        # Main Three.js viewer
+│   │   │   ├── DataDrivenScene.tsx       # Scene from JSON data
+│   │   │   ├── CumulativeScene.tsx      # Progressive scene building
+│   │   │   ├── PartHighlighter.tsx       # Part interaction system
+│   │   │   ├── ViewerControls.tsx        # Camera/orbit controls UI
+│   │   │   ├── SceneLoader.tsx           # Scene data loader
+│   │   │   └── [AnimatedPart, Screw, Washer, LBracket].tsx  # 3D primitives
+│   │   │
+│   │   ├── search/                 # Search functionality
+│   │   │   ├── search-section.tsx        # Main search component
+│   │   │   ├── SearchResults.tsx         # Results display
+│   │   │   ├── ProductCard.tsx           # Product card UI
+│   │   │   └── SearchProgress.tsx        # Real-time progress indicator
+│   │   │
+│   │   ├── library/                # Product library
+│   │   │   ├── library-section.tsx       # Library grid view
+│   │   │   └── library-card.tsx          # Product card component
+│   │   │
+│   │   ├── landing/                # Landing page components
+│   │   └── ui/                     # Shadcn/ui components
+│   │
 │   ├── lib/
-│   │   ├── api-client.ts     # Backend API client
-│   │   ├── top-50-data.ts    # Product data utilities
-│   │   └── utils.ts          # Helper functions
-│   ├── public/
-│   │   └── products/         # Product images
-│   └── package.json
-├── IMAGE_DOWNLOAD_GUIDE.md
-├── QUICK_START.md
-├── TOP_50_FEATURE_SUMMARY.md
-├── USAGE_GUIDE.md
-└── README.md
+│   │   ├── api-client.ts           # Backend API wrapper
+│   │   ├── top-50-data.ts          # Product data utilities
+│   │   └── utils.ts                # Helper functions
+│   │
+│   └── public/
+│       └── products/                # Static product images
 ```
 
-## ✨ Key Features
+### Key Directories Explained
 
-- **AI-Powered PDF Processing**: Automatically extracts assembly instructions from PDF manuals using Google Gemini
-- **Web Scraping**: Scrapes IKEA and other furniture retailers for product manuals using Bright Data
-- **3D Visualization**: Interactive 3D viewer for assembly steps using Three.js
-- **AI Assembly Assistant**: Real-time chatbot powered by Reka AI that answers questions about current step, parts, and tools
-- **Product Library**: Browse top 50 furniture products with cached data
-- **Step-by-Step Instructions**: Clear, organized assembly instructions with parts lists and tools
-- **Modern UI**: Built with Next.js 15, React, and Tailwind CSS
+**`backend/brightdata/`**: Web scraping orchestration layer. Handles product discovery via SERP API, metadata extraction, and PDF acquisition through Bright Data's proxy network.
 
-## 🛠️ Tech Stack
+**`backend/src/gemini/`**: AI processing pipeline. Converts PDFs to images, constructs vision prompts, invokes Gemini API, and transforms responses into structured assembly data with 3D geometry.
 
+**`frontend/components/viewer/`**: Three.js rendering engine. Implements scene graph construction, cumulative step visualization, part highlighting, and camera controls using React Three Fiber.
+
+**`frontend/components/assembly/`**: Assembly instruction UI. Manages step navigation, parts/tools display, and integrates Reka AI chatbot for contextual assistance.
+
+## Technical Workflow
+
+1. **Product Discovery**: User submits search query or IKEA product URL → Bright Data SERP API performs semantic search across regional IKEA domains
+2. **Data Extraction**: Web Scraper extracts product metadata (name, SKU, image URLs) → Web Unlocker bypasses bot detection and downloads assembly PDF
+3. **PDF Processing**: PDF pages converted to base64-encoded images → Each page analyzed by Gemini 2.0 Flash vision model with structured prompts
+4. **AI Extraction**: Gemini returns JSON with step descriptions, part quantities, tool requirements, and geometric data (positions, rotations, scales)
+5. **Scene Generation**: Extracted data transformed into Three.js scene graph → Primitives (boxes, cylinders) positioned in 3D space → Materials and animations applied
+6. **Rendering**: React Three Fiber renders scene → User navigates steps → Cumulative scene builds progressively → Parts highlight on hover/selection
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Shadcn/ui
+- **3D Rendering**: Three.js, React Three Fiber, @react-three/drei
 - **Backend**: Node.js, Express, TypeScript
-- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
-- **AI**: Google Gemini API, Reka AI (reka-core for chatbot)
-- **Scraping**: Bright Data (SERP API, Web Unlocker, Web Scraper)
-- **3D**: Three.js
+- **AI/ML**: Google Gemini 2.0 Flash (vision), Reka AI Core (chatbot)
+- **Web Scraping**: Bright Data (SERP API, Web Unlocker, Web Scraper, Residential Proxies)
+- **PDF Processing**: pdf-lib, pdfjs-dist, Sharp (image conversion)
 
-## 📦 Key Dependencies
+## Environment Variables
 
-### Backend
-- `express` - Web server
-- `cors` - CORS handling
-- `dotenv` - Environment variables
-- `@google/generative-ai` - Google Gemini AI API
-- `axios` - HTTP client for web scraping
-- `pdf-lib` - PDF manipulation and processing
-
-### Frontend
-- `next` - React framework (v15)
-- `react` - UI library
-- `tailwindcss` - Utility-first CSS framework
-- `three` - 3D graphics library
-- `@react-three/fiber` - React renderer for Three.js
-- `@react-three/drei` - Useful helpers for react-three-fiber
-- `shadcn/ui` - Reusable component library
-
-## 🔑 Environment Variables
-
-### Backend (.env)
+**Backend** (`backend/.env`):
 ```bash
-GEMINI_API_KEY=your_gemini_api_key_here
-BRIGHT_DATA_API_KEY=your_bright_data_key_here
+GEMINI_API_KEY=your_key
+BRIGHT_DATA_API_KEY=your_key
 PORT=3001
 ```
 
-### Frontend (.env.local)
+**Frontend** (`frontend/.env.local`):
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
-REKA_API_KEY=your_reka_api_key_here
+REKA_API_KEY=your_key
 ```
-
-See `.env.example` files in both `backend/` and `frontend/` directories for complete configuration options.
-
-## 📚 Documentation
-
-- **[QUICK_START.md](./QUICK_START.md)** - Get up and running quickly
-- **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** - Detailed usage instructions
-- **[CHATBOT_QUICK_START.md](./CHATBOT_QUICK_START.md)** - AI chatbot setup and testing
-- **[TOP_50_FEATURE_SUMMARY.md](./TOP_50_FEATURE_SUMMARY.md)** - Product library feature overview
-- **[IMAGE_DOWNLOAD_GUIDE.md](./IMAGE_DOWNLOAD_GUIDE.md)** - Guide for downloading product images
-- **[backend/SETUP.md](./backend/SETUP.md)** - Backend setup instructions
-- **[backend/GEOMETRY-GUIDE.md](./backend/GEOMETRY-GUIDE.md)** - 3D geometry processing guide
-- **[backend/src/parser_docs/](./backend/src/parser_docs/)** - PDF processing documentation
-
-## 🚀 How It Works
-
-1. **Search**: User searches for a furniture product (e.g., "IKEA Billy Bookcase")
-2. **Scrape**: Bright Data scrapes product pages and downloads assembly PDF manuals
-3. **Process**: Google Gemini AI analyzes the PDF and extracts:
-   - Assembly steps with descriptions
-   - Required parts and quantities
-   - Necessary tools
-   - 3D positioning data
-4. **Visualize**: Frontend displays interactive 3D assembly instructions with step-by-step guidance
-5. **Assist**: Reka AI chatbot answers real-time questions about the current assembly step
-
-## 🤝 Contributing
-
-This project was built during Cal Hacks 12.0. Feel free to fork and extend it!
-
-## 📄 License
-
-MIT License - feel free to use this project for your own purposes.
 
 ---
 
-**Built with ❤️ at Cal Hacks 12.0** 🏆
+Built at Cal Hacks 12.0 🏆
