@@ -2,7 +2,7 @@
 
 **Copilot for Assembly**
 
-![Demo](./demo.gif)
+![Demo](.backend/demo_optimized.gif)
 
 An AI-powered platform that transforms static PDF assembly manuals into interactive 3D assembly guides. The system leverages web scraping, computer vision, and 3D rendering to extract structured assembly instructions from furniture manuals and present them in an immersive, step-by-step visualization environment.
 
