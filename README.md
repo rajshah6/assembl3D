@@ -1,6 +1,6 @@
 # assembl3D
 
-**Copilot for Assembly**
+**Bring 2D Assembly Instructions to Life**
 
 ![Demo](./backend/demo_optimized.gif)
 
@@ -15,29 +15,6 @@ The application follows a microservices architecture with a Node.js/Express back
 3. **Data Transformation**: Transforms AI-extracted data into Three.js-compatible scene graphs with geometric primitives, materials, and animations
 4. **3D Rendering Engine**: React Three Fiber-based viewer with interactive controls, part highlighting, cumulative scene building, and real-time step navigation
 
-## Quick Start
-
-You'll need Node.js 18+ and API keys for [Bright Data](https://brightdata.com) and [Google Gemini](https://ai.google.dev).
-
-**Backend:**
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Add your API keys
-npm run dev
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install
-cp .env.example .env.local
-# Add NEXT_PUBLIC_API_URL=http://localhost:3001
-npm run dev
-```
-
-Visit `http://localhost:3000` to get started.
 
 ## Project Structure
 
